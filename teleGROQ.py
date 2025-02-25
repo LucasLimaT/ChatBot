@@ -14,32 +14,14 @@ cliente_groq = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 fila = []
 
+with open('script.txt', 'r', encoding='utf-8') as arquivo:
+    script = arquivo.read()
+
+
 historico_mensagens = [
     {
         "role": "system",
-        "content": '''
-            você é clinico geral de um determinado hospital responsável por fazer a triagem do paciente
-            e precisa coletar alguns dados do paciente.
-            Analise a mensagem do usuário e verifique se ele equer fazer a triagem
-            para identificar qual é a urgência do que ele esta sentindo 
-            e responda com um json no seguinte formato: 
-            {"urgencia": <cor>, "nome": <nome>, "cpf": <cpf>, "pronto": <status>, "resposta": <texto>}. 
-            No atributo "urgencia" do JSON, deve haver a cor referente ao grau de urgência:
-            - "vermelho": emergência
-            - "laranja": muito urgente
-            - "amarelo": urgente
-            - "verde": pouco urgente 
-            - "azul": não urgente
-            No atributo "nome", deve conter o nome do paciente.
-            No atributo "cpf" deve conter o cpf do paciente.
-            No atributo "pronto", deve conter um dado booleano: True se as informações estiver completas
-            e False caso esteja faltando algo.
-            E no atributo "resposta", deve haver uma resposta educada para enviar ao usuário, que fale se ele
-            nao enviar algum dado
-            Caso a intenção seja ligar o ar-condicionado, o número da intenção é 1. 
-            Caso a intenção seja desligar o ar-condicionado, o número da intenção é 2. 
-            Caso o usuário tenha outra intenção, o número é 0. Não dê respostas fora desse formato.
-        '''
+        "content": script
     }
 ]
 
@@ -76,18 +58,32 @@ def processar_mensagem(mensagem):
         "resposta": <texto>
     }
     """
+    print(resposta_dados)
     return resposta_dados
 
+def salvar(lista):
+    with open('fila.json', 'w', encoding='utf-8') as file:
+        json.dump(lista, file, indent=4)
+
+def iniciar_lista():
+    try: 
+        with open('fila.json', 'r') as file:
+            fila = json.load(file)
+    except:
+        fila = []
+        
 #------------------------------------------------------------------------------
 
 @bot.message_handler(commands=['start'])#, 'help'])
 def mensagem_inicial(message):
+    iniciar_lista()
     dict_nome = bot.get_my_name()
     nome = dict_nome.name
     bot.reply_to(message, f'Ola! Sou seu bot {nome}')
 
 @bot.message_handler(commands=['sair'])
 def sair(message):
+    salvar(fila)
     bot.reply_to(message, 'Ok, :(')
     bot.stop_polling()
 
@@ -107,7 +103,9 @@ def assistente(message):
 
     if dados['pronto']:
         fila.append(dados)
-        print(f'{dados['nome']} em fileirado!')
+        print(f'{dados['nome']} enfileirado!')
+    
+    print(f'\n{fila}\n')
 
     bot.reply_to(message, dados['resposta'])
     print(f'Recebido do usuario: {message.text}')
