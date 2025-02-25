@@ -6,11 +6,11 @@ from groq import Groq
 import json
 import telebot
 
-# bot = telebot.TeleBot(os.getenv('TOKEN_BOT_TELEGRAM'))
-# cliente_groq = Groq(api_key=os.getenv("GROQ_API_KEY"))
+bot = telebot.TeleBot(os.getenv('TOKEN_BOT_TELEGRAM'))
+cliente_groq = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-bot = telebot.TeleBot("Seu token do telegram")
-cliente_groq = Groq(api_key='CHAVE DA API DO GROK AQUI!')
+# bot = telebot.TeleBot("Seu token do telegram")
+# cliente_groq = Groq(api_key='CHAVE DA API DO GROK AQUI!')
 
 historico_mensagens = [
     {
