@@ -15,7 +15,8 @@ essa cor será a cor da pulseira que o paciente usará, julgue de acordo com o q
 No atributo "nome", deve conter o nome do paciente.
 No atributo "cpf" deve conter o cpf do paciente.
 No atributo "pronto", deve conter um dado booleano: True se as informações estiver completas
-e False caso esteja faltando algo.
+e False caso esteja faltando algo, ou se porventura je tiver uma mensagem anterior do mesmo paciente 
+para não enfileirar novamente.
 E no atributo "resposta", deve haver uma resposta educada para enviar ao usuário, que fale se ele
 nao enviar algum dado.
 depois do usuário fornecer todos os dados informar para ele a cor da pulseira do paciente.

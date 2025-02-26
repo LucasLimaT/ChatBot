@@ -20,7 +20,6 @@ fila = Fila()
 with open("script.txt", "r", encoding="utf-8") as arquivo:
     script = arquivo.read()
 
-
 historico_mensagens = [{"role": "system", "content": script}]
 
 
@@ -90,10 +89,6 @@ def inserir_na_fila_prioritaria(dado):
     salvar_fila(fila)
 
 
-mensagem_usuario = "exemplo de mensagem do paciente"
-resultado = processar_mensagem(mensagem_usuario)
-inserir_na_fila_prioritaria(resultado)
-print("Fila atual:", fila)
 
 
 # ------------------------------------------------------------------------------
@@ -115,6 +110,14 @@ def sair(message):
     bot.stop_polling()
 
 
+@bot.message_handler(commands=['pulseiras'])
+def mostrar_pulseiras(message):
+    with open('pulseiras.txt', 'r', encoding='utf-8') as file:
+        texto = file.read()
+
+    bot.reply_to(message, texto, parse_mode="HTML")
+
+
 # Esses comandos são desnecessarios
 """@bot.message_handler(commands=["criar_arquivo"])
 def criar_arquivo(message):
@@ -131,14 +134,16 @@ def enviar_foto(message):
 @bot.message_handler(func=lambda message: True)
 def assistente(message):
     dados = processar_mensagem(message.text)
+    resposta = dados.pop("resposta")
+    status = dados.pop("pronto")
 
-    if dados["pronto"]:
+    if status:
         inserir_na_fila_prioritaria(dados)
         print(f"{dados['nome']} enfileirado!")
 
     print(f"\n{fila}\n")
 
-    bot.reply_to(message, dados["resposta"])
+    bot.reply_to(message, resposta)
     print(f"Recebido do usuario: {message.text}")
 
 
