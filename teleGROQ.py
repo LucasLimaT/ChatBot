@@ -14,9 +14,6 @@ cliente_groq = Groq(api_key=os.getenv("GROQ_API_KEY"))
 # bot = telebot.TeleBot("Seu token do telegram")
 # cliente_groq = Groq(api_key='CHAVE DA API DO GROK AQUI!')
 
-fila = Fila()
-
-
 with open("script.txt", "r", encoding="utf-8") as arquivo:
     script = arquivo.read()
 
@@ -55,53 +52,42 @@ def processar_mensagem(mensagem):
         "resposta": <texto>
     }
     """
-    print(resposta_dados)
+
     return resposta_dados
 
-
-def salvar_fila(fila_objeto):
-    dados = []
-    atual = fila_objeto.first
-    while atual:
-        dados.append(atual.data)
-        atual = atual.next
-    with open("fila.json", "w", encoding="utf-8") as file:
-        json.dump(dados, file, indent=4)
-
-
 def iniciar_fila():
-    nova_fila = Fila()
+    fila = {}
     try:
         with open("fila.json", "r", encoding="utf-8") as file:
             dados = json.load(file)
-            for item in dados:
-                nova_fila.insere_paciente_na_fila(item)
+            for cpf, pessoas in dados.items():
+                fila[cpf] = pessoas
     except Exception as ex:
+        fila = {}
         print(f"Fila ainda não existe ou houve um erro: {ex}")
-    return nova_fila
+    return fila
+
 
 
 fila = iniciar_fila()
 
 
-def inserir_na_fila_prioritaria(dado):
-    fila.insere_paciente_na_fila(dado)
-    salvar_fila(fila)
-
-
-
-
-# ------------------------------------------------------------------------------
-
-# Esse comando é desnecessarios
-"""@bot.message_handler(commands=["start"])  # , 'help'])
-def mensagem_inicial(message):
+def salvar_fila(dados):
     global fila
-    fila = iniciar_fila()
-    dict_nome = bot.get_my_name()
-    nome = dict_nome.name
-    bot.reply_to(message, f"Ola! Sou seu bot {nome}")"""
+    preferencias = {"vermelho": 1, "laranja": 2, "amarelo": 3, "verde": 4, "azul": 5}
 
+    fila[dados['cpf']] = dados
+    fila = dict(sorted(fila.items(), key=lambda item: preferencias[item[1]["urgencia"]]))
+    
+    with open("fila.json", "w", encoding="utf-8") as file:
+        json.dump(dados, file, indent=4)
+
+
+
+
+
+
+# ---------------------------------------------------------------------------
 
 @bot.message_handler(commands=["sair"])
 def sair(message):
@@ -118,17 +104,6 @@ def mostrar_pulseiras(message):
     bot.reply_to(message, texto, parse_mode="HTML")
 
 
-# Esses comandos são desnecessarios
-"""@bot.message_handler(commands=["criar_arquivo"])
-def criar_arquivo(message):
-    with open("novo_arquivo.txt", "w") as arq:
-        arq.write("Teste arquivo\n")
-
-
-@bot.message_handler(commands=["foto"])
-def enviar_foto(message):
-    with open("emoji-joinha.jpeg", "rb") as arq_foto:
-        bot.send_photo(message.chat.id, arq_foto)"""
 
 
 @bot.message_handler(func=lambda message: True)
@@ -137,11 +112,13 @@ def assistente(message):
     resposta = dados.pop("resposta")
     status = dados.pop("pronto")
 
-    if status:
-        inserir_na_fila_prioritaria(dados)
-        print(f"{dados['nome']} enfileirado!")
 
-    print(f"\n{fila}\n")
+    try:
+        if status:
+            salvar_fila(dados)
+            print(f"{dados['nome']} enfileirado!")
+    except Exception as error:
+        print(f'error: {error}')
 
     bot.reply_to(message, resposta)
     print(f"Recebido do usuario: {message.text}")

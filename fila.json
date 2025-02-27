@@ -1,12 +1,17 @@
-[
-    {
+{
+    "05040302011": {
         "urgencia": "vermelho",
-        "nome": "Lucas dos Santos",
-        "cpf": "05668568164"
+        "nome": "Lucas Pimentel",
+        "cpf": "05040302011"
     },
-    {
+    "01020304050": {
+        "urgencia": "amarelo",
+        "nome": "Cleiza",
+        "cpf": "01020304050"
+    },
+    "05668568164": {
         "urgencia": "verde",
-        "nome": "Pedro Reis",
-        "cpf": "12345678900"
+        "nome": "Pedro Gomes",
+        "cpf": "05668568164"
     }
-]
+}
