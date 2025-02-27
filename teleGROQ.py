@@ -4,7 +4,6 @@ from fila import Fila
 from groq import Groq
 import json
 import telebot
-import requests
 
 load_dotenv()
 # ------------------------------------------------------------------------------
@@ -14,7 +13,6 @@ cliente_groq = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 # bot = telebot.TeleBot("Seu token do telegram")
 # cliente_groq = Groq(api_key='CHAVE DA API DO GROK AQUI!')
-
 
 with open("script.txt", "r", encoding="utf-8") as arquivo:
     script = arquivo.read()
@@ -54,6 +52,7 @@ def processar_mensagem(mensagem):
         "resposta": <texto>
     }
     """
+
     return resposta_dados
 
 def iniciar_fila():
@@ -69,7 +68,9 @@ def iniciar_fila():
     return fila
 
 
+
 fila = iniciar_fila()
+
 
 def salvar_fila(dados):
     global fila
@@ -86,8 +87,7 @@ def salvar_fila(dados):
 
 
 
-# ------------------------------------------------------------------------------
-
+# ---------------------------------------------------------------------------
 
 @bot.message_handler(commands=["sair"])
 def sair(message):
@@ -105,11 +105,13 @@ def mostrar_pulseiras(message):
 
 
 
+
 @bot.message_handler(func=lambda message: True)
 def assistente(message):
     dados = processar_mensagem(message.text)
     resposta = dados.pop("resposta")
     status = dados.pop("pronto")
+
 
     try:
         if status:
@@ -117,6 +119,7 @@ def assistente(message):
             print(f"{dados['nome']} enfileirado!")
     except Exception as error:
         print(f'error: {error}')
+
     bot.reply_to(message, resposta)
     print(f"Recebido do usuario: {message.text}")
 
