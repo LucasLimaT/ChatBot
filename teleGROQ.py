@@ -1,53 +1,29 @@
 import os
 from dotenv import load_dotenv
-load_dotenv() 
-#------------------------------------------------------------------------------
+from fila import Fila
 from groq import Groq
 import json
 import telebot
+import requests
 
-bot = telebot.TeleBot(os.getenv('TOKEN_BOT_TELEGRAM'))
+load_dotenv()
+# ------------------------------------------------------------------------------
+
+bot = telebot.TeleBot(os.getenv("TOKEN_BOT_TELEGRAM"))
 cliente_groq = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 # bot = telebot.TeleBot("Seu token do telegram")
 # cliente_groq = Groq(api_key='CHAVE DA API DO GROK AQUI!')
 
-fila = []
 
-historico_mensagens = [
-    {
-        "role": "system",
-        "content": '''
-            você é clinico geral de um determinado hospital responsável por fazer a triagem do paciente
-            e precisa coletar alguns dados do paciente.
-            Analise a mensagem do usuário e verifique se ele equer fazer a triagem
-            para identificar qual é a urgência do que ele esta sentindo 
-            e responda com um json no seguinte formato: 
-            {"urgencia": <cor>, "nome": <nome>, "cpf": <cpf>, "pronto": <status>, "resposta": <texto>}. 
-            No atributo "urgencia" do JSON, deve haver a cor referente ao grau de urgência:
-            - "vermelho": emergência
-            - "laranja": muito urgente
-            - "amarelo": urgente
-            - "verde": pouco urgente 
-            - "azul": não urgente
-            No atributo "nome", deve conter o nome do paciente.
-            No atributo "cpf" deve conter o cpf do paciente.
-            No atributo "pronto", deve conter um dado booleano: True se as informações estiver completas
-            e False caso esteja faltando algo.
-            E no atributo "resposta", deve haver uma resposta educada para enviar ao usuário, que fale se ele
-            nao enviar algum dado
-            Caso a intenção seja ligar o ar-condicionado, o número da intenção é 1. 
-            Caso a intenção seja desligar o ar-condicionado, o número da intenção é 2. 
-            Caso o usuário tenha outra intenção, o número é 0. Não dê respostas fora desse formato.
-        '''
-    }
-]
+with open("script.txt", "r", encoding="utf-8") as arquivo:
+    script = arquivo.read()
+
+historico_mensagens = [{"role": "system", "content": script}]
+
 
 def processar_mensagem(mensagem):
-    historico_mensagens.append({
-            "role": "user",
-            "content": mensagem
-    })
+    historico_mensagens.append({"role": "user", "content": mensagem})
 
     try:
         completion = cliente_groq.chat.completions.create(
@@ -58,59 +34,91 @@ def processar_mensagem(mensagem):
             top_p=1,
             stream=False,
             stop=None,
-            response_format={'type': 'json_object'}
+            response_format={"type": "json_object"},
         )
-    except:
+    except Exception as ex:
         historico_mensagens.pop()
-        return {'intencao': 0, 'resposta': 'Erro servidor Groq'}
+        return {"intencao": 0, "resposta": f"Erro ao conectar com o Groq: {ex}"}
 
     resposta_json = completion.choices[0].message.content
     resposta_dados = json.loads(resposta_json)
-
     historico_mensagens.append(completion.choices[0].message)
 
     """
     O retorno é um dicionário nesse formato: 
     {
-        "intencao": <numero>, 
+        "urgencia": <cor>, 
+        "nome": <nome>, 
+        "cpf": <cpf>, 
+        "pronto": <status>, 
         "resposta": <texto>
     }
     """
     return resposta_dados
 
-#------------------------------------------------------------------------------
+def iniciar_fila():
+    fila = {}
+    try:
+        with open("fila.json", "r", encoding="utf-8") as file:
+            dados = json.load(file)
+            for cpf, pessoas in dados.items():
+                fila[cpf] = pessoas
+    except Exception as ex:
+        fila = {}
+        print(f"Fila ainda não existe ou houve um erro: {ex}")
+    return fila
 
-@bot.message_handler(commands=['start'])#, 'help'])
-def mensagem_inicial(message):
-    dict_nome = bot.get_my_name()
-    nome = dict_nome.name
-    bot.reply_to(message, f'Ola! Sou seu bot {nome}')
 
-@bot.message_handler(commands=['sair'])
+fila = iniciar_fila()
+
+def salvar_fila(dados):
+    global fila
+    preferencias = {"vermelho": 1, "laranja": 2, "amarelo": 3, "verde": 4, "azul": 5}
+
+    fila[dados['cpf']] = dados
+    fila = dict(sorted(fila.items(), key=lambda item: preferencias[item[1]["urgencia"]]))
+    
+    with open("fila.json", "w", encoding="utf-8") as file:
+        json.dump(dados, file, indent=4)
+
+
+
+
+
+
+# ------------------------------------------------------------------------------
+
+
+@bot.message_handler(commands=["sair"])
 def sair(message):
-    bot.reply_to(message, 'Ok, :(')
+    salvar_fila(fila)
+    bot.reply_to(message, "Ok, :(")
     bot.stop_polling()
 
-@bot.message_handler(commands=['criar_arquivo'])
-def criar_arquivo(message):
-    with open('novo_arquivo.txt', 'w') as arq:
-        arq.write('Teste arquivo\n')
 
-@bot.message_handler(commands=['foto'])
-def enviar_foto(message):
-    with open('emoji-joinha.jpeg', 'rb') as arq_foto:
-        bot.send_photo(message.chat.id, arq_foto)
-    
+@bot.message_handler(commands=['pulseiras'])
+def mostrar_pulseiras(message):
+    with open('pulseiras.txt', 'r', encoding='utf-8') as file:
+        texto = file.read()
+
+    bot.reply_to(message, texto, parse_mode="HTML")
+
+
+
 @bot.message_handler(func=lambda message: True)
 def assistente(message):
     dados = processar_mensagem(message.text)
+    resposta = dados.pop("resposta")
+    status = dados.pop("pronto")
 
-    if dados['pronto']:
-        fila.append(dados)
-        print(f'{dados['nome']} em fileirado!')
-
-    bot.reply_to(message, dados['resposta'])
-    print(f'Recebido do usuario: {message.text}')
+    try:
+        if status:
+            salvar_fila(dados)
+            print(f"{dados['nome']} enfileirado!")
+    except Exception as error:
+        print(f'error: {error}')
+    bot.reply_to(message, resposta)
+    print(f"Recebido do usuario: {message.text}")
 
 
 # roda o TeleBot

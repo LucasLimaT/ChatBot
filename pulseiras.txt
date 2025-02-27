@@ -1,0 +1,20 @@
+🏥 <b>Classificação de Pulseiras no Hospital</b> 🏥  
+
+📌 No atendimento hospitalar, as pulseiras indicam a prioridade de cada paciente. Veja o que cada cor significa:  
+
+🔵 <b>Azul</b> – Pouca urgência  
+📖 Casos simples, que podem esperar mais tempo.  
+
+🟢 <b>Verde</b> – Não urgente  
+⏳ Atendimento necessário, mas sem risco imediato.  
+
+🟡 <b>Amarelo</b> – Urgente  
+⚠️ Necessário atendimento rápido, mas sem risco de morte.  
+
+🟠 <b>Laranja</b> – Muito urgente  
+🚨 Paciente em estado grave, precisa de atendimento imediato.  
+
+🔴 <b>Vermelho</b> – Emergência  
+⛑️ Risco de morte! Atendimento deve ser <b>imediato</b>.  
+
+⚕️ O tempo de espera varia conforme a gravidade do caso. Em emergências, procure ajuda imediatamente! 🚑  
