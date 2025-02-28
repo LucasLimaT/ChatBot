@@ -1,0 +1,9 @@
+📘 <b>COMANDOS DISPONÍVEIS</b> 📘  
+
+🚪 <b>/sair</b> - Encerra a interação com o bot.
+
+📿 <b>/pulseiras</b> - Mostra a classificação das cores das pulseiras.  
+
+📋 <b>/comandos</b> - Lista todos os comandos disponíveis. 
+
+👥 <b>/fila</b> - Mostra a ordem atual da fila de atendimento.
